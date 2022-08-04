@@ -57,3 +57,4 @@ else
     sudo resize2fs /dev/nvme0n1p1
   fi
 fi
+#sh resize.sh 30 this will increase 30GB size of cloud9 machine,please execute it from cloud9 shell
