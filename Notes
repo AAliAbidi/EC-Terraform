@@ -1,2 +1,106 @@
 # Terraform command 
 1. #terraform --version 
+2. Based on Go lang and interact with API, provides create add delete and update option
+3. resource "docker_image" "nodered_image"{
+     name = "nodered/node-red:latest"
+}
+Flow
+=====
+WRITE -> PLAN (Validate) -> APPLY 
+
+STATE
+======
+1. Store information about the current environnment
+2. It is created based up on the configuration files and any changes are commited to the infrastructure via API
+3. Declarative and Procedural, process are more abstracted.  
+4. Terraform is open source 
+5. HCL Syntax 
+6. Vendor Neutral 
+7. Require state management storage 
+8. Require own resources 
+9. Login infrastructure 
+10. Brakig chnages are generally more likey
+
+IMP
+====
+The way Terraform's registry works has changed somewhat after 0.14 and you will need to utilize the Docker provider found at kreuzwerker/docker instead of the original. You will want to change the provider block and also note that the containers you apply will be destroyed first, although in my output, it may say they have changed instead. Since we'll be using Docker Volumes, this is not an issue to be concerned with, just know that your output may differ slightly from mine. A user in the Q&A section recommended this addition if you are working on another project and have a reason not to destroy your containers:
+
+lifecycle {
+    ignore_changes = [bridge, command,container_logs,cpu_shares,dns,dns_opts,dns_search,entrypoint,env,exit_code,gateway,group_add,hostname,id,ip_address,ip_prefix_length,ipc_mode,links,log_opts,max_retry_count,memory,memory_swap,network_data,network_mode,privileged,publish_all_ports,shm_size,sysctls,tmpfs,user,working_dir,healthcheck,labels,ports,volumes]
+ 
+}
+But usually, you shouldn't worry about the destruction of containers as they should be considered ephemeral.
+
+
+
+Also:
+
+The final provider block is: 
+
+
+
+ terraform {
+  required_providers {
+    docker = {
+      source  = "kreuzwerker/docker"
+    }
+  }
+}
+
+
+Provider can be created to interact with API 
+
+Command:
+#terraform init 
+#terraform init -upgrade //to downgrade the provider 
+# version = "~> 2.12.2" //this will tell the teraform upgrade it to next minor version 
+#teraform fmt -diff
+#terraform plan 
+#teraform apply  //type yes to execute 
+#teraform destroy //to destroy the infrastructure
+#Deploying node red container using docker 
+#Redirect the plan to a file #terraform plan -out plan1
+#terraform apply "plan1" //no confirmation dialogue 
+#terraform state file is track the state 
+#terraform destroy --auto-approve
+#sudo apt install jq 
+#terraform show -json | jq 
+#teraform state list //show resources in our list 
+#terraform show | grep ip //show the IP address 
+#terraform show | grep name //show the name 
+
+Metadata about deployment
+==========================
+outputs - 
+#teraform console 
+> docker_container.node-red_container.name 
+> docker_container.node-red_container.ip_address
+#terraform output //apply once and read any time
+
+JoinFuctions - 
+terraform console
+> join(";",["thing",1])
+"thing;1"
+> join(";",["thing ",1])
+"thing ;1"
+> join("-",["this ", "sentence ", "has ", 2 + 2, " dashes" ])
+"this -sentence -has -4- dashes"
+
+> docker_container.node-red_container.ports
+tolist([
+  {
+    "external" = 1880
+    "internal" = 1880
+    "ip" = "0.0.0.0"
+    "protocol" = "tcp"
+  },
+])
+
+> docker_container.node-red_container.ports[0].external
+1880
+
+#Printing IP Address and port
+output "ip_and_port" {
+  value       = "http://${join(":",  [docker_container.node-red_container.ip_address, docker_container.node-red_container.ports[0].external])}"
+  description = "IP Address & Port"
+}
